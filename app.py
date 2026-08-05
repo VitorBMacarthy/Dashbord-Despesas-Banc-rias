@@ -6,7 +6,7 @@ from utils.parser import processar_pdf
 
 app = Flask(__name__)
 
-# Usa a pasta /tmp do sistema operacional (funciona perfeitamente no Render e no Windows)
+# Usa a pasta temporária para evitar erros de permissão no Render
 UPLOAD_FOLDER = os.path.join(tempfile.gettempdir(), "uploads")
 EXPORTS_FOLDER = os.path.join(tempfile.gettempdir(), "exports")
 
@@ -82,6 +82,8 @@ def exportar():
     caminho_excel = os.path.join(EXPORTS_FOLDER, "tarifas_bancarias.xlsx")
 
     df_export = ULTIMO_DF.copy()
+
+    # Mapeamento para garantir retrocompatibilidade de nomes de colunas
     if "Categoria" not in df_export.columns and "Produto" in df_export.columns:
         df_export["Categoria"] = df_export["Produto"]
     if "Descricao" not in df_export.columns and "Tarifa" in df_export.columns:
@@ -90,11 +92,16 @@ def exportar():
         df_export["Conta"] = df_export["Ag.conta"]
     if "Quantidade" not in df_export.columns and "Qtd" in df_export.columns:
         df_export["Quantidade"] = df_export["Qtd"]
+    if "Mês" not in df_export.columns:
+        df_export["Mês"] = "Janeiro"
 
-    df_export = df_export[["Data", "Categoria", "Descricao", "Conta", "Quantidade", "Valor"]]
+    # Seleciona as colunas na ordem desejada incluindo 'Mês'
+    colunas_finais = ["Data", "Categoria", "Descricao", "Conta", "Quantidade", "Valor", "Mês"]
+    df_export = df_export[colunas_finais]
 
     with pd.ExcelWriter(caminho_excel, engine="openpyxl") as writer:
         df_export.to_excel(writer, sheet_name="Lançamentos", index=False)
+
         resumo = df_export.groupby("Categoria")["Valor"].agg(["sum", "count"]).rename(
             columns={"sum": "Total (R$)", "count": "Qtd Lançamentos"}
         )
