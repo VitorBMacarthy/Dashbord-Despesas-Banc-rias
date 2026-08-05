@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Tarifas Bancárias</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js + Plugin de Datalabels -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+    <style>
+        body {
+            background-color: #0f1117;
+            color: #e2e8f0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        .card {
+            background-color: #181c27;
+            border: 1px solid #242b3d;
+            border-radius: 12px;
+            color: #ffffff;
+        }
+
+        .card-header {
+            background-color: #181c27 !important;
+            border-bottom: 1px solid #242b3d;
+        }
+
+        .text-muted {
+            color: #94a3b8 !important;
+        }
+
+        .text-secondary {
+            color: #cbd5e1 !important;
+        }
+
+        /* Botões Laranja */
+        .btn-primary, .btn-success {
+            background-color: #fd7e14;
+            border-color: #fd7e14;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .btn-primary:hover, .btn-primary:focus,
+        .btn-success:hover, .btn-success:focus {
+            background-color: #e86b02;
+            border-color: #e86b02;
+            color: #ffffff;
+        }
+
+        /* Inputs Escuros */
+        .form-control {
+            background-color: #0f1117;
+            border: 1px solid #242b3d;
+            color: #ffffff;
+        }
+
+        .form-control:focus {
+            background-color: #0f1117;
+            color: #ffffff;
+            border-color: #fd7e14;
+            box-shadow: 0 0 0 0.25rem rgba(253, 126, 20, 0.25);
+        }
+
+        /* Tabela Dark Totalmente Corrigida */
+        .table {
+            --bs-table-bg: #181c27;
+            --bs-table-color: #e2e8f0;
+            --bs-table-hover-bg: #22293a;
+            --bs-table-hover-color: #ffffff;
+            color: #e2e8f0 !important;
+            background-color: #181c27 !important;
+        }
+
+        .table-light {
+            --bs-table-bg: #1e2433 !important;
+            --bs-table-color: #94a3b8 !important;
+        }
+
+        .table-light th {
+            background-color: #1e2433 !important;
+            color: #94a3b8 !important;
+            border-bottom: 1px solid #242b3d !important;
+        }
+
+        .table tbody tr {
+            background-color: #181c27 !important;
+            color: #e2e8f0 !important;
+        }
+
+        .table tbody td {
+            background-color: #181c27 !important;
+            color: #ffffff !important;
+            border-color: #242b3d !important;
+        }
+
+        .table-hover tbody tr:hover td {
+            background-color: #22293a !important;
+            color: #ffffff !important;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container py-4">
+    <h2 class="mb-4 text-white fw-bold">Dashboard de Tarifas Bancárias</h2>
+
+    <!-- Form de Upload -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form action="/upload" method="POST" enctype="multipart/form-data" class="row g-3 align-items-center">
+                <div class="col-md-9">
+                    <input type="file" class="form-control" name="pdf" accept=".pdf" required>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">Importar PDF</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if erro %}
+        <div class="alert alert-danger bg-danger text-white border-0" role="alert">{{ erro }}</div>
+    {% endif %}
+
+    {% if tabela %}
+    <!-- Resumo Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-3">
+                <span class="text-muted small">Cliente</span>
+                <h6 class="fw-bold mb-0 text-white">{{ cliente }}</h6>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-3">
+                <span class="text-muted small">Período</span>
+                <h6 class="fw-bold mb-0 text-white">{{ periodo }}</h6>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 bg-danger text-white shadow-sm p-3">
+                <span class="small opacity-75">Total em Tarifas</span>
+                <h4 class="fw-bold mb-0">R$ {{ total }}</h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm p-3 h-100">
+                <h5 class="card-title fs-6 fw-bold mb-3 text-secondary">Distribuição por Categoria (%)</h5>
+                <div style="position: relative; height: 380px;">
+                    <canvas id="chartPizza"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card shadow-sm p-3 h-100">
+                <h5 class="card-title fs-6 fw-bold mb-3 text-secondary">Valores por Categoria (R$)</h5>
+                <div style="position: relative; height: 380px;">
+                    <canvas id="chartBarras"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela e Exportação -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center py-3">
+            <h5 class="mb-0 fs-6 fw-bold text-white">Detalhamento das Tarifas</h5>
+            <a href="/exportar" class="btn btn-success btn-sm">Exportar para Excel (.xlsx)</a>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data</th>
+                            <th>Tarifa</th>
+                            <th>Produto</th>
+                            <th>Ag.conta</th>
+                            <th class="text-center">Qtd</th>
+                            <th class="text-end">Valor (R$)</th>
+                            <th class="text-center">Mês</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in tabela %}
+                        <tr>
+                            <td>{{ item.Data }}</td>
+                            <td class="fw-bold text-white">{{ item.Tarifa }}</td>
+                            <td><span class="badge bg-secondary">{{ item.Produto }}</span></td>
+                            <td>{{ item['Ag.conta'] }}</td>
+                            <td class="text-center">{{ item.Qtd }}</td>
+                            <td class="text-end fw-bold text-warning">R$ {{ "%.2f"|format(item.Valor) }}</td>
+                            <td class="text-center">{{ item['Mês'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if chart_labels %}
+<script>
+    const labels = {{ chart_labels | tojson }};
+    const dataValores = {{ chart_data | tojson }};
+
+    const mapaCores = {
+        'Tarifa de Informação Cadastral': '#0d6efd',
+        'Cadastro': '#0d6efd',
+        'Tarifa de Centralização de Saldos': '#198754',
+        'Centralização Saldo': '#198754',
+        'Tarifa Cheque Ouro Manutenção': '#ffc107',
+        'Cheques': '#ffc107',
+        'Débito Serviço Cobrança': '#dc3545',
+        'Cobrança Bancária': '#dc3545',
+        'Depósito Identificado': '#0dcaf0',
+        'Depósitos': '#0dcaf0',
+        'Tarifa Extrato Meio Magnético': '#6f42c1',
+        'Tarifa Extrato Padrão Swift': '#6f42c1',
+        'Extratos': '#6f42c1',
+        'Tarifa de Pacote de Serviços': '#fd7e14',
+        'Pacote de Serviços': '#fd7e14',
+        'Tarifa Pix Recebido QR Code': '#20c997',
+        'Serviços PIX': '#20c997',
+        'Tarifa Mensal Programa Relac': '#d63384',
+        'Tarifa Relacionamento': '#d63384'
+    };
+
+    const colors = labels.map(label => mapaCores[label] || '#6c757d');
+
+    // 1. Gráfico de Rosca Dark Mode
+    const ctxPizza = document.getElementById('chartPizza').getContext('2d');
+    new Chart(ctxPizza, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: dataValores,
+                backgroundColor: colors,
+                borderWidth: 2,
+                borderColor: '#181c27'
+            }]
+        },
+        plugins: [ChartDataLabels],
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: 10 },
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: '#cbd5e1',
+                        font: { size: 11 },
+                        boxWidth: 12,
+                        padding: 12
+                    }
+                },
+                datalabels: {
+                    formatter: (value, ctx) => {
+                        let sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                        let pct = (value * 100 / sum);
+                        return pct >= 3 ? pct.toFixed(1) + "%" : "";
+                    },
+                    color: '#ffffff',
+                    font: { weight: 'bold', size: 11 },
+                    textShadowColor: 'rgba(0, 0, 0, 0.7)',
+                    textShadowBlur: 4
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            let value = context.parsed || 0;
+                            let sum = context.dataset.data.reduce((a, b) => a + b, 0);
+                            let pct = (value * 100 / sum).toFixed(1);
+                            return `${label}: R$ ${value.toFixed(2)} (${pct}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // 2. Gráfico de Barras Dark Mode
+    const ctxBarras = document.getElementById('chartBarras').getContext('2d');
+    new Chart(ctxBarras, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Gasto Total (R$)',
+                data: dataValores,
+                backgroundColor: colors,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#242b3d' },
+                    ticks: { color: '#94a3b8' }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#94a3b8', font: { size: 10 } }
+                }
+            }
+        }
+    });
+</script>
+{% endif %}
+
+</body>
+</html>
