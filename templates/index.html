@@ -6,38 +6,74 @@
     <title>Dashboard de Tarifas Bancárias</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome (Ícones) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js + Plugin de Datalabels -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
     <style>
+        :root {
+            --bg-body: #0f1117;
+            --bg-card: #181c27;
+            --border-card: #242b3d;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            --text-title: #ffffff;
+            --text-muted: #94a3b8;
+            --text-secondary: #cbd5e1;
+            --input-bg: #0f1117;
+            --input-color: #ffffff;
+            --table-bg: #181c27;
+            --table-color: #e2e8f0;
+            --table-hover: #22293a;
+            --table-header-bg: #1e2433;
+            --table-header-color: #94a3b8;
+            --grid-color: #242b3d;
+        }
+
+        [data-theme="light"] {
+            --bg-body: #f1f5f9;
+            --bg-card: #ffffff;
+            --border-card: #cbd5e1;
+            --card-shadow: 0 4px 16px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.05);
+            --text-title: #0f172a;
+            --text-muted: #64748b;
+            --text-secondary: #334155;
+            --input-bg: #f8fafc;
+            --input-color: #0f172a;
+            --table-bg: #ffffff;
+            --table-color: #1e293b;
+            --table-hover: #f8fafc;
+            --table-header-bg: #e2e8f0;
+            --table-header-color: #334155;
+            --grid-color: #e2e8f0;
+        }
+
         body {
-            background-color: #0f1117;
-            color: #e2e8f0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--table-color);
+            font-family: system-ui, -apple-system, sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .card {
-            background-color: #181c27;
-            border: 1px solid #242b3d;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-card);
             border-radius: 12px;
-            color: #ffffff;
+            color: var(--text-title);
+            box-shadow: var(--card-shadow);
+            transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
         .card-header {
-            background-color: #181c27 !important;
-            border-bottom: 1px solid #242b3d;
+            background-color: var(--bg-card) !important;
+            border-bottom: 1px solid var(--border-card);
         }
 
-        .text-muted {
-            color: #94a3b8 !important;
-        }
+        .text-title-custom { color: var(--text-title) !important; }
+        .text-muted { color: var(--text-muted) !important; }
+        .text-secondary { color: var(--text-secondary) !important; }
 
-        .text-secondary {
-            color: #cbd5e1 !important;
-        }
-
-        /* Botões Laranja */
         .btn-primary, .btn-success {
             background-color: #fd7e14;
             border-color: #fd7e14;
@@ -45,137 +81,290 @@
             font-weight: 600;
         }
 
-        .btn-primary:hover, .btn-primary:focus,
-        .btn-success:hover, .btn-success:focus {
+        .btn-primary:hover, .btn-success:hover {
             background-color: #e86b02;
             border-color: #e86b02;
             color: #ffffff;
         }
 
-        /* Inputs Escuros */
-        .form-control {
-            background-color: #0f1117;
-            border: 1px solid #242b3d;
-            color: #ffffff;
+        .form-control, .form-select {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-card);
+            color: var(--input-color);
         }
 
-        .form-control:focus {
-            background-color: #0f1117;
-            color: #ffffff;
+        .form-control:focus, .form-select:focus {
+            background-color: var(--input-bg);
+            color: var(--input-color);
             border-color: #fd7e14;
             box-shadow: 0 0 0 0.25rem rgba(253, 126, 20, 0.25);
         }
 
-        /* Tabela Dark Totalmente Corrigida */
         .table {
-            --bs-table-bg: #181c27;
-            --bs-table-color: #e2e8f0;
-            --bs-table-hover-bg: #22293a;
-            --bs-table-hover-color: #ffffff;
-            color: #e2e8f0 !important;
-            background-color: #181c27 !important;
+            --bs-table-bg: var(--table-bg);
+            --bs-table-color: var(--table-color);
+            --bs-table-hover-bg: var(--table-hover);
+            --bs-table-hover-color: var(--text-title);
+            color: var(--table-color) !important;
+            background-color: var(--table-bg) !important;
         }
 
         .table-light {
-            --bs-table-bg: #1e2433 !important;
-            --bs-table-color: #94a3b8 !important;
+            --bs-table-bg: var(--table-header-bg) !important;
+            --bs-table-color: var(--table-header-color) !important;
         }
 
         .table-light th {
-            background-color: #1e2433 !important;
-            color: #94a3b8 !important;
-            border-bottom: 1px solid #242b3d !important;
+            background-color: var(--table-header-bg) !important;
+            color: var(--table-header-color) !important;
+            border-bottom: 1px solid var(--border-card) !important;
         }
 
         .table tbody tr {
-            background-color: #181c27 !important;
-            color: #e2e8f0 !important;
+            background-color: var(--table-bg) !important;
+            color: var(--table-color) !important;
         }
 
         .table tbody td {
-            background-color: #181c27 !important;
-            color: #ffffff !important;
-            border-color: #242b3d !important;
+            background-color: var(--table-bg) !important;
+            color: var(--table-color) !important;
+            border-color: var(--border-card) !important;
         }
 
-        .table-hover tbody tr:hover td {
-            background-color: #22293a !important;
-            color: #ffffff !important;
+        .btn-theme-toggle {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-card);
+            color: var(--text-title);
+            box-shadow: var(--card-shadow);
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-theme-toggle:hover { border-color: #fd7e14; }
+
+        .chart-wrapper-evolucao { position: relative; height: 280px; width: 100%; }
+        .chart-wrapper-half { position: relative; height: 320px; width: 100%; }
+
+        .print-only { display: none !important; }
+
+        /* ========================================================= */
+        /*   ESTILIZAÇÃO EXCLUSIVA E RIGOROSA PARA PDF / IMPRESSÃO  */
+        /* ========================================================= */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 8mm 8mm 8mm 8mm;
+            }
+
+            .no-print, #cardUpload, #themeToggleBtn, .btn, select, #boxTabelaDetalhamento {
+                display: none !important;
+            }
+
+            .print-only {
+                display: block !important;
+            }
+
+            body {
+                background-color: #ffffff !important;
+                color: #000000 !important;
+                font-size: 9pt;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            .container {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            .row {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                margin-right: -4px !important;
+                margin-left: -4px !important;
+            }
+
+            .row > [class*="col-md-4"] {
+                flex: 0 0 33.333333% !important;
+                max-width: 33.333333% !important;
+                padding-right: 4px !important;
+                padding-left: 4px !important;
+            }
+
+            .row > [class*="col-lg-6"] {
+                flex: 0 0 50% !important;
+                max-width: 50% !important;
+                padding-right: 4px !important;
+                padding-left: 4px !important;
+            }
+
+            .row > [class*="col-12"] {
+                flex: 0 0 100% !important;
+                max-width: 100% !important;
+                padding-right: 4px !important;
+                padding-left: 4px !important;
+            }
+
+            .card {
+                box-shadow: none !important;
+                border: 1px solid #cbd5e1 !important;
+                background-color: #ffffff !important;
+                color: #0f172a !important;
+                border-radius: 6px !important;
+                break-inside: avoid !important;
+                margin-bottom: 8px !important;
+                overflow: hidden !important;
+            }
+
+            .text-title-custom, .text-secondary {
+                color: #0f172a !important;
+            }
+
+            .text-muted {
+                color: #64748b !important;
+            }
+
+            .chart-wrapper-evolucao {
+                height: 180px !important;
+                max-height: 180px !important;
+                overflow: hidden !important;
+            }
+
+            .chart-wrapper-half {
+                height: 200px !important;
+                max-height: 200px !important;
+                overflow: hidden !important;
+            }
+
+            canvas {
+                max-width: 100% !important;
+                max-height: 100% !important;
+                display: block !important;
+            }
         }
     </style>
 </head>
 <body>
 
 <div class="container py-4">
-    <h2 class="mb-4 text-white fw-bold">Dashboard de Tarifas Bancárias</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="text-title-custom fw-bold mb-0">Dashboard de Tarifas Bancárias Anual</h2>
+            <!-- Título exclusivo para a versão em PDF / Impressão -->
+            <p id="subtituloPdf" class="print-only text-muted mb-0 fw-bold fs-6">Relatório Executivo de Tarifas Bancárias</p>
+        </div>
+        <button id="themeToggleBtn" class="btn-theme-toggle no-print" onclick="alternarTema()">
+            🌙 Modo Escuro
+        </button>
+    </div>
 
-    <!-- Form de Upload -->
-    <div class="card shadow-sm mb-4">
+    <!-- Form de Upload Múltiplo Corrigido -->
+    <div class="card mb-4 no-print" id="cardUpload">
         <div class="card-body">
-            <form action="/upload" method="POST" enctype="multipart/form-data" class="row g-3 align-items-center">
-                <div class="col-md-9">
-                    <input type="file" class="form-control" name="pdf" accept=".pdf" required>
-                </div>
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-primary w-100">Importar PDF</button>
+            <form action="/upload" method="POST" enctype="multipart/form-data">
+                <div class="row g-3 align-items-top">
+                    <div class="col-md-9">
+                        <input type="file" class="form-control" name="pdfs" accept=".pdf" multiple required>
+                        <small class="text-muted d-block mt-1">Você pode selecionar múltiplos arquivos PDF de uma vez (até 12 meses).</small>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary w-100" style="height: 38px;">Importar PDF(s)</button>
+                    </div>
                 </div>
             </form>
         </div>
     </div>
 
     {% if erro %}
-        <div class="alert alert-danger bg-danger text-white border-0" role="alert">{{ erro }}</div>
+        <div class="alert alert-danger bg-danger text-white border-0 no-print" role="alert">{{ erro }}</div>
     {% endif %}
 
     {% if tabela %}
+    <!-- Filtro de Período / Mês (Aproximado) -->
+    <div class="card p-3 mb-4 no-print">
+        <div class="d-flex align-items-center gap-3">
+            <label for="seletorMes" class="form-label text-title-custom fw-bold mb-0 text-nowrap">
+                Visualização:
+            </label>
+            <select id="seletorMes" class="form-select fw-bold" style="max-width: 320px;" onchange="filtrarDados()">
+                <option value="TODOS" selected>📅 Visão Consolidada (Período Completo)</option>
+                {% for mes in meses_disponiveis %}
+                    <option value="{{ mes }}">Mês: {{ mes }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
     <!-- Resumo Cards -->
-    <div class="row g-3 mb-4">
+    <div class="row g-3 mb-3">
         <div class="col-md-4">
-            <div class="card border-0 shadow-sm p-3">
+            <div class="card p-3">
                 <span class="text-muted small">Cliente</span>
-                <h6 class="fw-bold mb-0 text-white">{{ cliente }}</h6>
+                <h6 class="fw-bold mb-0 text-title-custom">{{ cliente }}</h6>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card border-0 shadow-sm p-3">
-                <span class="text-muted small">Período</span>
-                <h6 class="fw-bold mb-0 text-white">{{ periodo }}</h6>
+            <div class="card p-3">
+                <span class="text-muted small">Arquivos Processados</span>
+                <h6 class="fw-bold mb-0 text-title-custom" id="cardPeriodo">{{ meses_disponiveis|length }} Mês(es) carregado(s)</h6>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card border-0 bg-danger text-white shadow-sm p-3">
+            <div class="card bg-danger text-white p-3">
                 <span class="small opacity-75">Total em Tarifas</span>
-                <h4 class="fw-bold mb-0">R$ {{ total }}</h4>
+                <h4 class="fw-bold mb-0" id="cardTotal">R$ {{ total }}</h4>
             </div>
         </div>
     </div>
 
     <!-- Gráficos -->
-    <div class="row g-4 mb-4">
+    <div class="row g-3 mb-4">
+        <!-- Gráfico Anual de Evolução por Mês (Esconde automaticamente quando um Mês específico é selecionado) -->
+        <div class="col-12" id="boxEvolucao">
+            <div class="card p-3">
+                <h5 class="card-title fs-6 fw-bold mb-2 text-secondary">Evolução Mensal dos Gastos (R$)</h5>
+                <div class="chart-wrapper-evolucao">
+                    <canvas id="chartEvolucao"></canvas>
+                </div>
+            </div>
+        </div>
+
         <div class="col-lg-6">
-            <div class="card shadow-sm p-3 h-100">
-                <h5 class="card-title fs-6 fw-bold mb-3 text-secondary">Distribuição por Categoria (%)</h5>
-                <div style="position: relative; height: 380px;">
+            <div class="card p-3 h-100">
+                <h5 class="card-title fs-6 fw-bold mb-2 text-secondary">Distribuição por Categoria (%)</h5>
+                <div class="chart-wrapper-half">
                     <canvas id="chartPizza"></canvas>
                 </div>
             </div>
         </div>
         <div class="col-lg-6">
-            <div class="card shadow-sm p-3 h-100">
-                <h5 class="card-title fs-6 fw-bold mb-3 text-secondary">Valores por Categoria (R$)</h5>
-                <div style="position: relative; height: 380px;">
+            <div class="card p-3 h-100">
+                <h5 class="card-title fs-6 fw-bold mb-2 text-secondary">Valores por Categoria (R$)</h5>
+                <div class="chart-wrapper-half">
                     <canvas id="chartBarras"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Tabela e Exportação -->
-    <div class="card shadow-sm mb-4">
+    <!-- Tabela e Exportações (Ocultada no PDF / Impressão) -->
+    <div class="card mb-4" id="boxTabelaDetalhamento">
         <div class="card-header d-flex justify-content-between align-items-center py-3">
-            <h5 class="mb-0 fs-6 fw-bold text-white">Detalhamento das Tarifas</h5>
-            <a href="/exportar" class="btn btn-success btn-sm">Exportar para Excel (.xlsx)</a>
-        </div>
+            <h5 class="mb-0 fs-6 fw-bold text-title-custom">Detalhamento das Tarifas</h5>
+            <div>
+                <button onclick="imprimirPdfRelatorio()" class="btn btn-success btn-sm me-2 no-print" title="Salvar em PDF ou Imprimir">
+            <i class="fa-solid fa-file-pdf me-1"></i> Salvar PDF / Imprimir
+        </button>
+        <a href="/exportar?mes=TODOS" id="btnExportar" class="btn btn-success btn-sm no-print">
+            <i class="fa-solid fa-file-excel me-1"></i> Exportar para Excel (.xlsx)
+        </a>
+    </div>
+</div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
@@ -190,18 +379,8 @@
                             <th class="text-center">Mês</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {% for item in tabela %}
-                        <tr>
-                            <td>{{ item.Data }}</td>
-                            <td class="fw-bold text-white">{{ item.Tarifa }}</td>
-                            <td><span class="badge bg-secondary">{{ item.Produto }}</span></td>
-                            <td>{{ item['Ag.conta'] }}</td>
-                            <td class="text-center">{{ item.Qtd }}</td>
-                            <td class="text-end fw-bold text-warning">R$ {{ "%.2f"|format(item.Valor) }}</td>
-                            <td class="text-center">{{ item['Mês'] }}</td>
-                        </tr>
-                        {% endfor %}
+                    <tbody id="tabelaCorpo">
+                        <!-- Preenchido via JS -->
                     </tbody>
                 </table>
             </div>
@@ -210,119 +389,308 @@
     {% endif %}
 </div>
 
-{% if chart_labels %}
 <script>
-    const labels = {{ chart_labels | tojson }};
-    const dataValores = {{ chart_data | tojson }};
+    function aplicarTema(tema) {
+        document.documentElement.setAttribute('data-theme', tema);
+        localStorage.setItem('theme', tema);
+        const btn = document.getElementById('themeToggleBtn');
+        if (tema === 'light') {
+            btn.innerHTML = '☀️ Modo Claro';
+        } else {
+            btn.innerHTML = '🌙 Modo Escuro';
+        }
+
+        const corTexto = tema === 'light' ? '#334155' : '#94a3b8';
+        const corGrid = tema === 'light' ? '#cbd5e1' : '#242b3d';
+
+        if (typeof chartEvolucao !== 'undefined' && chartEvolucao) {
+            chartEvolucao.options.scales.x.ticks.color = corTexto;
+            chartEvolucao.options.scales.x.grid.color = corGrid;
+            chartEvolucao.options.scales.y.ticks.color = corTexto;
+            chartEvolucao.options.scales.y.grid.color = corGrid;
+            chartEvolucao.update();
+        }
+        if (typeof chartBarras !== 'undefined' && chartBarras) {
+            chartBarras.options.scales.x.ticks.color = corTexto;
+            chartBarras.options.scales.y.ticks.color = corTexto;
+            chartBarras.options.scales.y.grid.color = corGrid;
+            chartBarras.update();
+        }
+        if (typeof chartPizza !== 'undefined' && chartPizza) {
+            chartPizza.options.plugins.legend.labels.color = corTexto;
+            chartPizza.update();
+        }
+    }
+
+    function alternarTema() {
+        const temaAtual = document.documentElement.getAttribute('data-theme') || 'dark';
+        const novoTema = temaAtual === 'dark' ? 'light' : 'dark';
+        aplicarTema(novoTema);
+    }
+
+    const temaSalvo = localStorage.getItem('theme') || 'dark';
+    aplicarTema(temaSalvo);
+</script>
+
+{% if tabela %}
+<script>
+    const todosLancamentos = {{ tabela | tojson }};
+    const resumoEvolucao = {{ chart_evolucao | tojson }};
 
     const mapaCores = {
-        'Tarifa de Informação Cadastral': '#0d6efd',
-        'Cadastro': '#0d6efd',
-        'Tarifa de Centralização de Saldos': '#198754',
-        'Centralização Saldo': '#198754',
-        'Tarifa Cheque Ouro Manutenção': '#ffc107',
-        'Cheques': '#ffc107',
-        'Débito Serviço Cobrança': '#dc3545',
-        'Cobrança Bancária': '#dc3545',
-        'Depósito Identificado': '#0dcaf0',
-        'Depósitos': '#0dcaf0',
-        'Tarifa Extrato Meio Magnético': '#6f42c1',
-        'Tarifa Extrato Padrão Swift': '#6f42c1',
-        'Extratos': '#6f42c1',
-        'Tarifa de Pacote de Serviços': '#fd7e14',
-        'Pacote de Serviços': '#fd7e14',
-        'Tarifa Pix Recebido QR Code': '#20c997',
-        'Serviços PIX': '#20c997',
-        'Tarifa Mensal Programa Relac': '#d63384',
-        'Tarifa Relacionamento': '#d63384'
+        'Tarifa de Informação Cadastral': '#0d6efd', 'Cadastro': '#0d6efd',
+        'Tarifa de Centralização de Saldos': '#198754', 'Centralização de Saldos': '#198754',
+        'Tarifa Cheque Ouro Manutenção': '#ffc107', 'Cheques': '#ffc107',
+        'Débito Serviço Cobrança': '#dc3545', 'Cobrança Bancária': '#dc3545',
+        'Depósito Identificado': '#0dcaf0', 'Depósitos': '#0dcaf0',
+        'Tarifa Extrato Meio Magnético': '#6f42c1', 'Extratos': '#6f42c1',
+        'Tarifa de Pacote de Serviços': '#fd7e14', 'Pacote de Serviços': '#fd7e14',
+        'Tarifa Pix Recebido QR Code': '#20c997', 'Serviços PIX': '#20c997',
+        'Tarifa Mensal Programa Relac': '#d63384', 'Tarifa Relacionamento': '#d63384'
     };
 
-    const colors = labels.map(label => mapaCores[label] || '#6c757d');
+    let chartPizza, chartBarras, chartEvolucao;
 
-    // 1. Gráfico de Rosca Dark Mode
-    const ctxPizza = document.getElementById('chartPizza').getContext('2d');
-    new Chart(ctxPizza, {
-        type: 'doughnut',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: dataValores,
-                backgroundColor: colors,
-                borderWidth: 2,
-                borderColor: '#181c27'
-            }]
-        },
-        plugins: [ChartDataLabels],
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: { padding: 10 },
-            plugins: {
-                legend: {
-                    position: 'right',
-                    labels: {
-                        color: '#cbd5e1',
-                        font: { size: 11 },
-                        boxWidth: 12,
-                        padding: 12
-                    }
-                },
-                datalabels: {
-                    formatter: (value, ctx) => {
-                        let sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                        let pct = (value * 100 / sum);
-                        return pct >= 3 ? pct.toFixed(1) + "%" : "";
+    if (resumoEvolucao && resumoEvolucao.labels && resumoEvolucao.labels.length > 0) {
+        const ctxEvolucao = document.getElementById('chartEvolucao').getContext('2d');
+        const temaAtual = document.documentElement.getAttribute('data-theme') || 'dark';
+        const corTexto = temaAtual === 'light' ? '#334155' : '#94a3b8';
+        const corGrid = temaAtual === 'light' ? '#cbd5e1' : '#242b3d';
+
+        chartEvolucao = new Chart(ctxEvolucao, {
+            type: 'line',
+            data: {
+                labels: resumoEvolucao.labels,
+                datasets: [{
+                    label: 'Gasto no Mês (R$)',
+                    data: resumoEvolucao.valores,
+                    borderColor: '#fd7e14',
+                    backgroundColor: 'rgba(253, 126, 20, 0.15)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#fd7e14'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: corGrid }, ticks: { color: corTexto } },
+                    x: { grid: { color: corGrid }, ticks: { color: corTexto } }
+                }
+            }
+        });
+    }
+
+    function filtrarDados() {
+        const seletor = document.getElementById('seletorMes');
+        const mesSelecionado = seletor.value;
+        const textoOpcao = seletor.options[seletor.selectedIndex].text;
+
+        let dadosFiltrados = todosLancamentos;
+
+        // Atualiza o subtítulo para a versão impressa/PDF
+        const subtituloPdf = document.getElementById('subtituloPdf');
+        if (subtituloPdf) {
+            subtituloPdf.innerText = `Período: ${textoOpcao}`;
+        }
+
+        // Atualiza o link do Excel
+        const btnExportar = document.getElementById('btnExportar');
+        if (btnExportar) {
+            btnExportar.href = `/exportar?mes=${encodeURIComponent(mesSelecionado)}`;
+        }
+
+        if (mesSelecionado !== 'TODOS') {
+            dadosFiltrados = todosLancamentos.filter(item => {
+                const mesItem = (item['Mês'] || item.Mes || '').toString().trim().toLowerCase();
+                return mesItem === mesSelecionado.trim().toLowerCase();
+            });
+            // Oculta a caixa de evolução anual para o PDF quando filtrado por Mês individual
+            document.getElementById('boxEvolucao').style.display = 'none';
+        } else {
+            document.getElementById('boxEvolucao').style.display = 'block';
+        }
+
+        const tbody = document.getElementById('tabelaCorpo');
+        tbody.innerHTML = '';
+        let total = 0;
+
+        dadosFiltrados.forEach(item => {
+            const v = parseFloat(item.Valor) || 0;
+            total += v;
+
+            const tarifa = item.Tarifa || item.Descricao || '-';
+            const produto = item.Produto || item.Categoria || '-';
+            const conta = item['Ag.conta'] || item.Conta || '-';
+            const qtd = item.Qtd || item.Quantidade || 1;
+            const dataStr = item.Data || '-';
+            const mesStr = item['Mês'] || item.Mes || '-';
+
+            const tr = `<tr>
+                <td>${dataStr}</td>
+                <td class="fw-bold text-title-custom">${tarifa}</td>
+                <td><span class="badge bg-secondary">${produto}</span></td>
+                <td>${conta}</td>
+                <td class="text-center">${qtd}</td>
+                <td class="text-end fw-bold text-warning">R$ ${v.toFixed(2)}</td>
+                <td class="text-center">${mesStr}</td>
+            </tr>`;
+            tbody.innerHTML += tr;
+        });
+
+        document.getElementById('cardTotal').innerText = 'R$ ' + total.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+        const categoriasMap = {};
+        dadosFiltrados.forEach(item => {
+            const cat = item.Tarifa || item.Categoria || 'Outras';
+            const v = parseFloat(item.Valor) || 0;
+            categoriasMap[cat] = (categoriasMap[cat] || 0) + v;
+        });
+
+        const labelsCat = Object.keys(categoriasMap);
+        const valoresCat = Object.values(categoriasMap);
+        const coresCat = labelsCat.map(l => mapaCores[l] || '#6c757d');
+
+        renderGraficos(labelsCat, valoresCat, coresCat);
+    }
+
+    function renderGraficos(labels, valores, cores) {
+        if (chartPizza) chartPizza.destroy();
+        if (chartBarras) chartBarras.destroy();
+
+        const temaAtual = document.documentElement.getAttribute('data-theme') || 'dark';
+        const corTexto = temaAtual === 'light' ? '#334155' : '#94a3b8';
+        const corGrid = temaAtual === 'light' ? '#cbd5e1' : '#242b3d';
+        const bgBordaChart = temaAtual === 'light' ? '#ffffff' : '#181c27';
+
+        // Total geral fixo para cálculo preciso das porcentagens
+        const totalGeralFixo = valores.reduce((a, b) => a + b, 0);
+
+        // ----------------------------------------------------
+        // 1. GRÁFICO REDONDO (DOUGHNUT) - APENAS OS MAIORES
+        // ----------------------------------------------------
+        const ctxPizza = document.getElementById('chartPizza').getContext('2d');
+        chartPizza = new Chart(ctxPizza, {
+            type: 'doughnut',
+            data: { labels: labels, datasets: [{ data: valores, backgroundColor: cores, borderWidth: 2, borderColor: bgBordaChart }] },
+            plugins: [ChartDataLabels],
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { color: corTexto, font: { size: 10 }, boxWidth: 10 }
                     },
-                    color: '#ffffff',
-                    font: { weight: 'bold', size: 11 },
-                    textShadowColor: 'rgba(0, 0, 0, 0.7)',
-                    textShadowBlur: 4
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.label || '';
-                            let value = context.parsed || 0;
-                            let sum = context.dataset.data.reduce((a, b) => a + b, 0);
-                            let pct = (value * 100 / sum).toFixed(1);
-                            return `${label}: R$ ${value.toFixed(2)} (${pct}%)`;
+                    datalabels: {
+                        display: function(context) {
+                            // Só exibe o rótulo se a fatia não estiver oculta e representar pelo menos 3% do total
+                            if (!context.chart.getDataVisibility(context.dataIndex)) return false;
+                            const val = context.dataset.data[context.dataIndex];
+                            const pct = totalGeralFixo > 0 ? (val * 100 / totalGeralFixo) : 0;
+                            return pct >= 3.0;
+                        },
+                        formatter: (val) => {
+                            let pct = totalGeralFixo > 0 ? (val * 100 / totalGeralFixo) : 0;
+                            return pct.toFixed(1) + "%";
+                        },
+                        color: '#fff',
+                        font: { weight: 'bold', size: 10 }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const valor = context.parsed || 0;
+                                const pct = totalGeralFixo > 0 ? ((valor * 100) / totalGeralFixo).toFixed(1) : 0;
+                                const valorFormatado = valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                                return ` ${label}: ${valorFormatado} (${pct}%)`;
+                            }
                         }
                     }
                 }
             }
-        }
-    });
+        });
 
-    // 2. Gráfico de Barras Dark Mode
-    const ctxBarras = document.getElementById('chartBarras').getContext('2d');
-    new Chart(ctxBarras, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Gasto Total (R$)',
-                data: dataValores,
-                backgroundColor: colors,
-                borderRadius: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: { color: '#242b3d' },
-                    ticks: { color: '#94a3b8' }
+        // ----------------------------------------------------
+        // 2. GRÁFICO DE BARRAS - PORCENTAGEM NO TOPO
+        // ----------------------------------------------------
+        const ctxBarras = document.getElementById('chartBarras').getContext('2d');
+        chartBarras = new Chart(ctxBarras, {
+            type: 'bar',
+            data: { labels: labels, datasets: [{ data: valores, backgroundColor: cores, borderRadius: 4 }] },
+            plugins: [ChartDataLabels],
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 2,
+                        formatter: (val) => {
+                            if (val <= 0 || totalGeralFixo === 0) return "";
+                            let pct = (val * 100 / totalGeralFixo);
+                            return pct >= 0.1 ? pct.toFixed(1) + "%" : "";
+                        },
+                        color: corTexto,
+                        font: { weight: 'bold', size: 9 }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const valor = context.parsed.y || 0;
+                                const pct = totalGeralFixo > 0 ? ((valor * 100) / totalGeralFixo).toFixed(1) : 0;
+                                const valorFormatado = valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                                return ` Total: ${valorFormatado} (${pct}%)`;
+                            }
+                        }
+                    }
                 },
-                x: {
-                    grid: { display: false },
-                    ticks: { color: '#94a3b8', font: { size: 10 } }
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: corGrid },
+                        ticks: { color: corTexto },
+                        // Dá uma folga no topo do eixo Y para a % acima da barra mais alta caber sem cortar
+                        grace: '10%'
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: corTexto, font: { size: 9 } }
+                    }
                 }
             }
-        }
-    });
+        });
+    }
+
+    function imprimirPdfRelatorio() {
+        if (chartEvolucao) chartEvolucao.resize();
+        if (chartPizza) chartPizza.resize();
+        if (chartBarras) chartBarras.resize();
+
+        setTimeout(() => {
+            window.print();
+        }, 150);
+    }
+
+    window.onbeforeprint = () => {
+        if (chartEvolucao) chartEvolucao.resize();
+        if (chartPizza) chartPizza.resize();
+        if (chartBarras) chartBarras.resize();
+    };
+
+    window.onafterprint = () => {
+        if (chartEvolucao) chartEvolucao.resize();
+        if (chartPizza) chartPizza.resize();
+        if (chartBarras) chartBarras.resize();
+    };
+
+    filtrarDados();
 </script>
 {% endif %}
 

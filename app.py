@@ -6,7 +6,7 @@ from utils.parser import processar_pdf
 
 app = Flask(__name__)
 
-# Usa a pasta temporária para evitar erros de permissão no Render
+# Diretórios temporários para manipular uploads e arquivos exportados
 UPLOAD_FOLDER = os.path.join(tempfile.gettempdir(), "uploads")
 EXPORTS_FOLDER = os.path.join(tempfile.gettempdir(), "exports")
 
@@ -25,52 +25,94 @@ def index():
 def upload():
     global ULTIMO_DF
 
-    if "pdf" not in request.files:
-        return render_template("index.html", erro="Nenhum arquivo enviado.")
+    # Recebe múltiplos arquivos do input 'pdfs'
+    arquivos = request.files.getlist("pdfs")
+    if not arquivos or arquivos[0].filename == "":
+        return render_template(
+            "index.html", erro="Selecione ao menos um arquivo PDF."
+        )
 
-    arquivo = request.files["pdf"]
-    if arquivo.filename == "":
-        return render_template("index.html", erro="Selecione um arquivo PDF.")
-
-    caminho_pdf = os.path.join(UPLOAD_FOLDER, arquivo.filename)
+    todos_dfs = []
+    cliente_nome = "Cliente Não Identificado"
 
     try:
-        arquivo.save(caminho_pdf)
-        cliente, periodo, total, df = processar_pdf(caminho_pdf)
+        for arquivo in arquivos:
+            if arquivo and arquivo.filename.endswith(".pdf"):
+                caminho_pdf = os.path.join(UPLOAD_FOLDER, arquivo.filename)
+                arquivo.save(caminho_pdf)
 
-        if df.empty:
-            return render_template("index.html",
-                                   erro="Não foi possível identificar lançamentos de tarifas no PDF informado.")
+                # Processa o PDF individual
+                cliente, periodo, total, df = processar_pdf(caminho_pdf)
+                if not df.empty:
+                    todos_dfs.append(df)
+                    if cliente:
+                        cliente_nome = cliente
 
-        ULTIMO_DF = df
+                # Remove o arquivo temporário após a leitura
+                if os.path.exists(caminho_pdf):
+                    os.remove(caminho_pdf)
 
-        # Agrupamento para Gráficos
-        resumo_cat = df.groupby("Tarifa", as_index=False)["Valor"].sum()
-        total_calculado = df["Valor"].sum()
+        if not todos_dfs:
+            return render_template(
+                "index.html",
+                erro="Nenhum dado válido de tarifa foi encontrado nos PDFs enviados.",
+            )
 
-        labels = resumo_cat["Tarifa"].tolist()
-        valores = resumo_cat["Valor"].round(2).tolist()
+        # Consolidação de todos os DataFrames extraídos
+        df_consolidado = pd.concat(todos_dfs, ignore_index=True)
+        ULTIMO_DF = df_consolidado
 
-        tabela = df.to_dict(orient="records")
+        # Ordenação lógica dos meses
+        ordem_meses = [
+            "Janeiro",
+            "Fevereiro",
+            "Março",
+            "Abril",
+            "Maio",
+            "Junho",
+            "Julho",
+            "Agosto",
+            "Setembro",
+            "Outubro",
+            "Novembro",
+            "Dezembro",
+        ]
+
+        # Filtra os meses que realmente existem nos PDFs enviados
+        meses_presentes = [
+            m for m in ordem_meses if m in df_consolidado["Mês"].unique()
+        ]
+
+        # Resumo da Evolução Mensal para o gráfico de linha (Ano Todo)
+        evolucao = df_consolidado.groupby("Mês", as_index=False)["Valor"].sum()
+        evolucao["Mês"] = pd.Categorical(
+            evolucao["Mês"], categories=ordem_meses, ordered=True
+        )
+        evolucao = evolucao.sort_values("Mês")
+
+        chart_evolucao = {
+            "labels": evolucao["Mês"].astype(str).tolist(),
+            "valores": evolucao["Valor"].round(2).tolist(),
+        }
+
+        total_calculado = df_consolidado["Valor"].sum()
+        tabela = df_consolidado.to_dict(orient="records")
 
         return render_template(
             "index.html",
-            cliente=cliente,
-            periodo=periodo,
-            total=f"{total_calculado:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+            cliente=cliente_nome,
+            total=f"{total_calculado:,.2f}".replace(",", "X")
+            .replace(".", ",")
+            .replace("X", "."),
             tabela=tabela,
-            chart_labels=labels,
-            chart_data=valores
+            meses_disponiveis=meses_presentes,
+            chart_evolucao=chart_evolucao,
         )
 
     except Exception as e:
-        return render_template("index.html", erro=f"Erro no processamento do PDF: {str(e)}")
-    finally:
-        if os.path.exists(caminho_pdf):
-            try:
-                os.remove(caminho_pdf)
-            except Exception:
-                pass
+        return render_template(
+            "index.html", erro=f"Erro ao processar os PDFs: {str(e)}"
+        )
 
 
 @app.route("/exportar")
@@ -79,35 +121,63 @@ def exportar():
     if ULTIMO_DF is None or ULTIMO_DF.empty:
         return "Nenhum dado para exportar", 400
 
-    caminho_excel = os.path.join(EXPORTS_FOLDER, "tarifas_bancarias.xlsx")
+    # Recebe o parâmetro ?mes= passados pela URL pelo JavaScript
+    mes_filtro = request.args.get("mes", "TODOS")
 
     df_export = ULTIMO_DF.copy()
 
-    # Mapeamento para garantir retrocompatibilidade de nomes de colunas
-    if "Categoria" not in df_export.columns and "Produto" in df_export.columns:
-        df_export["Categoria"] = df_export["Produto"]
-    if "Descricao" not in df_export.columns and "Tarifa" in df_export.columns:
-        df_export["Descricao"] = df_export["Tarifa"]
-    if "Conta" not in df_export.columns and "Ag.conta" in df_export.columns:
-        df_export["Conta"] = df_export["Ag.conta"]
-    if "Quantidade" not in df_export.columns and "Qtd" in df_export.columns:
-        df_export["Quantidade"] = df_export["Qtd"]
-    if "Mês" not in df_export.columns:
-        df_export["Mês"] = "Janeiro"
+    # Aplica o filtro se um mês específico tiver sido selecionado
+    if mes_filtro != "TODOS":
+        df_export = df_export[
+            df_export["Mês"].str.lower() == mes_filtro.lower()
+        ]
+        nome_arquivo = f"tarifas_bancarias_{mes_filtro.lower()}.xlsx"
+        nome_aba_resumo = f"Resumo - {mes_filtro}"
+    else:
+        nome_arquivo = "tarifas_bancarias_anual.xlsx"
+        nome_aba_resumo = "Resumo por Mês"
 
-    # Seleciona as colunas na ordem desejada incluindo 'Mês'
-    colunas_finais = ["Data", "Categoria", "Descricao", "Conta", "Quantidade", "Valor", "Mês"]
+    if df_export.empty:
+        return "Nenhum dado encontrado para o período selecionado.", 404
+
+    caminho_excel = os.path.join(EXPORTS_FOLDER, nome_arquivo)
+
+    colunas_finais = [
+        "Data",
+        "Categoria",
+        "Descricao",
+        "Conta",
+        "Quantidade",
+        "Valor",
+        "Mês",
+    ]
     df_export = df_export[colunas_finais]
 
     with pd.ExcelWriter(caminho_excel, engine="openpyxl") as writer:
+        # Aba com os lançamentos detalhados
         df_export.to_excel(writer, sheet_name="Lançamentos", index=False)
 
-        resumo = df_export.groupby("Categoria")["Valor"].agg(["sum", "count"]).rename(
-            columns={"sum": "Total (R$)", "count": "Qtd Lançamentos"}
-        )
-        resumo.to_excel(writer, sheet_name="Resumo por Categoria")
+        # Aba de resumo dinâmica
+        if mes_filtro == "TODOS":
+            resumo_mes = (
+                df_export.groupby(["Mês", "Categoria"])["Valor"]
+                .sum()
+                .unstack(fill_value=0)
+            )
+            resumo_mes.to_excel(writer, sheet_name=nome_aba_resumo)
+        else:
+            resumo_cat = (
+                df_export.groupby("Categoria")["Valor"]
+                .agg(["sum", "count"])
+                .rename(
+                    columns={"sum": "Total (R$)", "count": "Qtd Lançamentos"}
+                )
+            )
+            resumo_cat.to_excel(writer, sheet_name=nome_aba_resumo)
 
-    return send_file(caminho_excel, as_attachment=True, download_name="Tarifas_Bancarias.xlsx")
+    return send_file(
+        caminho_excel, as_attachment=True, download_name=nome_arquivo
+    )
 
 
 if __name__ == "__main__":
